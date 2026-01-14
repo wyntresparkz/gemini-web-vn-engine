@@ -1,90 +1,209 @@
-# Gemini Visual Novel Engine (GVNE)
-Version 0.7.9.1
-Description
-GVNE is a userscript-based overlay for the Gemini web interface. It captures text output from the host's generative containers and reformats it into a Visual Novel interface. The engine manages text pagination, sprite display based on speaker tags, and provides a secondary UI for reviewing dialogue history.
+# 🎮 Gemini Visual Novel Engine (GVNE)
 
-Features
-Typewriter Rendering: Displays text at a constant rate (40 cps) with manual skip and advance functionality.
+![Version](https://img.shields.io/badge/version-0.7.9.1-blue)
+![License](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-green)
+![Platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 
-Tag-Based Persona Display: Parses [name]: prefixes to toggle character sprites and update the namebox UI.
+> A userscript-based Visual Novel interface overlay for Google Gemini
 
-Pagination Logic: Splits long text blocks into pages to prevent dialogue box overflow.
+**Co-authored by Claude & CodeBunny** 🤖🐰
 
-Backlog System: A CSP-compliant history menu that records dialogue strings in a scrollable list.
+---
 
-Sanitization Filter: Automatically removes specific host-generated classes (e.g., .citation) and code blocks from the narrative stream.
+## 📖 Overview
 
-Persistent Nametags: Maintains the current speaker's identity across multiple pages within a single dialogue block.
+GVNE transforms the standard Gemini web interface into an immersive Visual Novel experience. The engine intercepts text output from Gemini's generative containers and reformats it into a classic VN interface complete with character sprites, dialogue boxes, and a scrollable backlog system.
 
-Developer UI: Provides basic sliders for adjusting sprite scale and vertical positioning.
+### ✨ Key Features
 
-Installation
-Install a userscript manager (e.g., Tampermonkey).
+| Feature | Description |
+|---------|-------------|
+| **⌨️ Typewriter Effect** | Smooth text rendering at 40 characters per second with manual skip/advance |
+| **🎭 Dynamic Sprites** | Automatic character sprite display based on `[name]:` tags |
+| **📄 Smart Pagination** | Intelligent text splitting to prevent dialogue box overflow |
+| **📜 Backlog System** | CSP-compliant dialogue history with scrollable review interface |
+| **🧹 Content Sanitization** | Automatic removal of citations, code blocks, and metadata from narrative stream |
+| **👤 Persistent Nametags** | Speaker identity maintained across multi-page dialogue blocks |
+| **🛠️ Developer Tools** | Real-time sprite scale and position adjustment sliders |
 
-Add the script to the manager.
+---
 
-The script executes on gemini.google.com.
+## 🚀 Installation
 
-Controls:
+### Prerequisites
+- A userscript manager extension (e.g., [Tampermonkey](https://www.tampermonkey.net/), [Violentmonkey](https://violentmonkey.github.io/))
+- Access to [gemini.google.com](https://gemini.google.com)
 
-Space / ArrowRight: Advance text.
+### Setup
+1. Install your preferred userscript manager
+2. Click [here](#) to install GVNE *(add your script URL)*
+3. Navigate to gemini.google.com
+4. The engine will automatically initialize
 
-ESC: Toggle engine visibility.
+---
 
-Planned Functionality (v0.8.0 Roadmap)
-Save System: Functionality to export the current message history backlog to local storage or file to prevent data loss on tab closure.
+## 🎮 Controls
 
-Load System: Integration with existing host chat history to allow loading previous dialogue sessions.
+| Key | Action |
+|-----|--------|
+| `Space` / `→` | Advance text / Skip typewriter effect |
+| `ESC` | Toggle engine visibility |
+| `Click` | Advance to next page |
 
-Code Block Management: A dedicated interface for displaying technical code blocks removed from the narrative stream.
+---
 
-Session Scraping: Logic to pre-populate the backlog using existing DOM elements on page load.
+## 🗺️ Roadmap (v0.8.0)
 
-Technical Notes
-The engine utilizes a MutationObserver targeted at structured-content-container. Version 0.7.9.1 specifically addresses an issue where the final page of a stream was truncated during the removal of host-level citation elements.
+- [ ] **💾 Save System**: Export dialogue history to prevent data loss on tab closure
+- [ ] **📥 Load System**: Integration with Gemini's native chat history
+- [ ] **💻 Code Block Viewer**: Dedicated interface for technical content removed from narrative
+- [ ] **🔄 Session Scraping**: Pre-populate backlog from existing DOM elements on page load
 
-The engine uses specific instructions hidden in the model's output so the model should be given these instructions for formatting before attempting to load a persona to chat with
-Code snippet
+---
 
-current_time:2026-01-14
-last_message:2026-01-14
-elapsed_time:0 seconds
-esm:enthusiasm:0.6, technical_focus:1.0, affection:1.1, shame:0.1
-[coder bunny]: That's a vital addition! The script is only as good as the data it receives. If the host LLM doesn't follow a specific "Speech Protocol," the namebox won't trigger, sprites won't load, and the pagination could break. I've drafted a "Speech Requirements" section that you can drop right into the technical notes of the README.
+## 🧪 Technical Details
 
-[coder bunny]: I've kept it strictly functional, focusing on the specific regex-trigger patterns the 0.7.9.1 parser looks for.
+### Architecture
+GVNE utilizes a `MutationObserver` targeting `structured-content-container` elements to intercept Gemini's text stream in real-time. Version 0.7.9.1 specifically addresses truncation issues during citation removal from the final page of streamed responses.
 
-LLM Speech Requirements (Output Protocol)
-To ensure proper rendering within the GVNE interface, the LLM must adhere to the following formatting standards. Failure to follow these patterns will result in the engine defaulting to "Narrator" mode and potentially breaking UI elements.
+### CSP Compliance
+The engine is designed to respect Google's Content Security Policy restrictions:
+- Background images loaded via blob URLs
+- No `innerHTML` manipulation
+- DOM-based text extraction and manipulation
 
-1. Speaker Attribution (Tagging)
-The engine utilizes a regex pattern ^\[(.*?)\]\s*: to identify speakers.
+---
 
-Format: [Speaker Name]: Dialogue text here.
+## 📋 LLM Output Protocol
 
-Requirements:
+> **Critical**: For proper rendering, Gemini must follow specific formatting rules
 
-The tag must be at the very beginning of the paragraph.
+### 1. Speaker Attribution (Tagging)
 
-The name must be enclosed in square brackets.
+The engine uses the regex pattern `^\[(.*?)\]\s*:` to identify speakers.
 
-A colon and a space must immediately follow the brackets.
+**Format:**
+```
+[Speaker Name]: Dialogue text here.
+```
 
-Persona Mapping: The name inside the brackets (case-insensitive) must match a key in the PersonaLibrary to trigger sprite rendering.
+**Requirements:**
+- ✅ Tag must be at the **start of the paragraph**
+- ✅ Name enclosed in `[square brackets]`
+- ✅ Followed by `:` and a space
+- ✅ Name must match a key in `PersonaLibrary` (case-insensitive)
 
-2. Narrative vs. Dialogue
-Dialogue: Must always start with a Speaker Tag.
+**Examples:**
+```
+✅ [Alice]: This is properly formatted dialogue.
+✅ [BOB]: Case doesn't matter for persona matching.
+❌ Alice: Missing brackets will be treated as narrator text.
+❌  [Charlie]: Leading space breaks the parser.
+```
 
-Narrator/Action: Any paragraph without a [name]: tag is treated as "Narrator" text.
+### 2. Narrative vs. Dialogue
 
-Requirement: Actions or "thoughts" should be placed in separate paragraphs from dialogue to avoid breaking the "Nametag Ghosting" logic.
+| Type | Format | Behavior |
+|------|--------|----------|
+| **Dialogue** | `[Name]: Text` | Triggers sprite + namebox update |
+| **Narrator** | Plain text | No speaker tag, treated as narration |
+| **Actions** | Separate paragraph | Keep actions in their own `<p>` tag |
 
-3. Text Formatting & Special Characters
-Avoid Markdown Bold/Italics: The parser automatically strips ** and * characters to maintain a clean UI. For emphasis, use capital letters or descriptive text.
+**Example:**
+```
+[Alice]: I can't believe we're finally here!
 
-Avoid Inline Code: Do not use backticks (`) for technical terms in dialogue. The engine's sanitization filter (.code-block, code, pre) will remove any text wrapped in these tags, causing "missing word" errors in the dialogue box.
+Alice's eyes sparkled with excitement as she gazed at the horizon.
 
-Paragraph Length: While the engine handles pagination, keeping paragraphs under 600 characters is recommended for optimal performance and to prevent late-stream truncation.
+[Bob]: Yeah, it's been a long journey.
+```
 
-4. Meta-Instruction Suppression
-The LLM should be instructed to suppress all post-dialogue "follow-up" questions or conversational fillers. GVNE includes a .citation class firewall, but native suppression via prompting is the primary method for ensuring a pure narrative stream.
+### 3. Text Formatting Guidelines
+
+| Element | Rule | Reason |
+|---------|------|--------|
+| **Bold/Italics** | ❌ Avoid `**bold**` and `*italic*` | Automatically stripped by parser |
+| **Emphasis** | ✅ Use CAPS or descriptive text | Maintains clean UI |
+| **Inline Code** | ❌ Never use `` `backticks` `` | Sanitization filter removes code tags |
+| **Paragraph Length** | ⚠️ Keep under 600 chars | Prevents late-stream truncation |
+
+### 4. Meta-Content Suppression
+
+**The LLM should NOT output:**
+- ❌ Follow-up questions after dialogue
+- ❌ Conversational fillers ("What would you like to do next?")
+- ❌ System messages or instructions
+
+While GVNE includes a `.citation` class firewall, **prompt-level suppression is the primary defense** against UI pollution.
+
+---
+
+### Customization Options
+- Sprite positioning and scaling
+- Custom CSS themes *(coming in v0.8.0)*
+
+---
+
+## 🐛 Known Issues
+
+- **v0.7.9.1**: Citation removal on final page may cause brief text flicker
+- Some Gemini UI elements may briefly appear during page load
+- File upload currently broken - will be repaired on next iteration
+- Occasional slowdown during typewriter animation 
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Setup
+```bash
+git clone https://github.com/yourusername/gemini-vn-engine.git
+cd gemini-vn-engine
+# Install to your userscript manager for testing
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License**.
+
+**You are free to:**
+- ✅ Share — copy and redistribute the material
+- ✅ Adapt — remix, transform, and build upon the material
+
+**Under the following terms:**
+- 📝 Attribution — You must give appropriate credit
+- 🚫 NonCommercial — You may not use the material for commercial purposes
+- 🔄 ShareAlike — If you remix or build upon the material, you must distribute your contributions under the same license
+
+See the [LICENSE](LICENSE) file for full details or visit [creativecommons.org](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+---
+
+## 🙏 Acknowledgments
+
+**Co-authored by:**
+- **Claude** (Anthropic) - Core architecture and implementation
+- **CodeBunny** - Feature design and testing
+
+Special thanks to the hundreds of VN authors that fueled my entire childhood for inspiration.
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/gemini-vn-engine/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/gemini-vn-engine/discussions)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the VN community**
+
+⭐ Star this repo if you find it useful!
+
+</div>
