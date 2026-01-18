@@ -3,6 +3,12 @@
 ![Version](https://img.shields.io/badge/version-0.7.9.1-blue)
 ![License](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-green)
 ![Platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
+![Status](https://img.shields.io/badge/status-DEPRECATED-red)
+
+> [!WARNING]
+> **DEPRECATED**: This version of the engine is no longer actively supported and will be superseded by a new browser extension model in the near future.
+>
+> **Current Status (Jan 2026)**: Code is currently functional and stable. This repository will remain un-archived to allow for issue ticketing, but active support is not guaranteed.
 
 > A userscript-based Visual Novel interface overlay for Google Gemini
 
@@ -25,6 +31,7 @@ GVNE transforms the standard Gemini web interface into an immersive Visual Novel
 | **🧹 Content Sanitization** | Automatic removal of citations, code blocks, and metadata from narrative stream |
 | **👤 Persistent Nametags** | Speaker identity maintained across multi-page dialogue blocks |
 | **🛠️ Developer Tools** | Real-time sprite scale and position adjustment sliders |
+| **⛶ Mobile Mode** | Native Fullscreen support for mobile devices and tablets |
 
 ---
 
@@ -49,22 +56,25 @@ GVNE transforms the standard Gemini web interface into an immersive Visual Novel
 | `Space` / `→` | Advance text / Skip typewriter effect |
 | `ESC` | Toggle engine visibility |
 | `Click` | Advance to next page |
+| `⛶` Button | Mobile only: Toggle Fullscreen |
 
 ---
 
-## 🗺️ Roadmap (v0.8.0)
+## 🗺️ Roadmap (Archived)
 
-- [ ] **💾 Save System**: Export dialogue history to prevent data loss on tab closure
-- [ ] **📥 Load System**: Integration with Gemini's native chat history
-- [ ] **💻 Code Block Viewer**: Dedicated interface for technical content removed from narrative
-- [ ] **🔄 Session Scraping**: Pre-populate backlog from existing DOM elements on page load
+~- [ ] **💾 Save System**: Export dialogue history to prevent data loss on tab closure~
+~- [ ] **📥 Load System**: Integration with Gemini's native chat history~
+~- [ ] **💻 Code Block Viewer**: Dedicated interface for technical content removed from narrative~
+~- [ ] **🔄 Session Scraping**: Pre-populate backlog from existing DOM elements on page load~
+
+> **Note**: All future updates and feature implementations will be targeted towards the new extension-based version of the engine.
 
 ---
 
 ## 🧪 Technical Details
 
 ### Architecture
-GVNE utilizes a `MutationObserver` targeting `structured-content-container` elements to intercept Gemini's text stream in real-time. Version 0.7.9.1 specifically addresses truncation issues during citation removal from the final page of streamed responses.
+GVNE utilizes a `MutationObserver` targeting `structured-content-container` elements to intercept Gemini's text stream in real-time. Version 0.7.9.1 addresses streaming truncation issues and introduces mobile device support.
 
 ### CSP Compliance
 The engine is designed to respect Google's Content Security Policy restrictions:
@@ -148,7 +158,7 @@ While GVNE includes a `.citation` class firewall, **prompt-level suppression is 
 
 - **v0.7.9.1**: Citation removal on final page may cause brief text flicker
 - Some Gemini UI elements may briefly appear during page load
-- File upload currently broken - will be repaired on next iteration
+- File upload currently broken - will be repaired in the new extension version
 - Occasional slowdown during typewriter animation 
 
 ---

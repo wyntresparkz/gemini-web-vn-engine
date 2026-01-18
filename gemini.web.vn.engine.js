@@ -11,7 +11,7 @@
 // @run-at       document-idle
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     const PersonaLibrary = {
@@ -81,6 +81,7 @@
         .show-indicator { display: block !important; }
         .vn-hidden { display: none !important; }
         .google-ui-nuked { display: none !important; }
+        #vn-fullscreen-btn { position: fixed; top: 15px; right: 15px; z-index: 10101; background: rgba(0,0,0,0.6); border: 2px solid #0f0; color: #0f0; padding: 10px; border-radius: 50%; width: 45px; height: 45px; display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; backdrop-filter: blur(5px); }
         @keyframes pulse-soft { 0% { opacity: 0.2; } 50% { opacity: 0.7; } 100% { opacity: 0.2; } }
     `);
 
@@ -92,7 +93,7 @@
 
     const backlogCont = document.createElement('div'); backlogCont.id = 'vn-backlog-container';
     const backlogList = document.createElement('div'); backlogList.id = 'vn-backlog-list';
-    const backlogClose = document.createElement('button'); backlogClose.id = 'vn-backlog-close'; 
+    const backlogClose = document.createElement('button'); backlogClose.id = 'vn-backlog-close';
     backlogClose.textContent = 'Return to Game';
     backlogCont.append(backlogList, backlogClose);
     overlay.appendChild(backlogCont);
@@ -182,7 +183,7 @@
             if (real) {
                 real.focus(); const p = document.createElement('p'); p.textContent = val; real.appendChild(p);
                 real.dispatchEvent(new Event('input', { bubbles: true }));
-                setTimeout(() => real.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, bubbles: true})), 100);
+                setTimeout(() => real.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true })), 100);
             }
         }
     });
@@ -220,8 +221,10 @@
         else if (!document.querySelector('button[aria-label="Stop response"]')) { userPrompt.classList.add('show-indicator'); inputCont.classList.add('visible'); diagCont.classList.add('input-active'); }
     }
 
-    function advance() { if (isMenuOpen || backlogCont.classList.contains('visible')) return; if (isTyping) finishTyping();
-    else if (currentPageIndex < currentPages.length - 1) { currentPageIndex++; startTypewriter(currentPages[currentPageIndex]); } }
+    function advance() {
+        if (isMenuOpen || backlogCont.classList.contains('visible')) return; if (isTyping) finishTyping();
+        else if (currentPageIndex < currentPages.length - 1) { currentPageIndex++; startTypewriter(currentPages[currentPageIndex]); }
+    }
 
     function processMessage(container) {
         const paragraphs = [];
@@ -232,18 +235,43 @@
         });
         const isGenerating = !!document.querySelector('button[aria-label="Stop response"]');
         const newPages = []; paragraphs.forEach(p => {
-            const MAX = 280; const sentences = p.split(/(?<=[.!?])(?=\s+[A-Z])/); 
+            const MAX = 280; const sentences = p.split(/(?<=[.!?])(?=\s+[A-Z])/);
             const tagMatch = p.match(/^\[.*?\]\s*:/);
             const tag = tagMatch ? tagMatch[0] : "";
-            let buf = tag; 
+            let buf = tag;
             sentences.forEach(s => {
                 let sClean = s.replace(tag, "").trim();
-                if ((buf + sClean).length > MAX) { newPages.push(buf.trim()); buf = tag + " " + sClean; } 
+                if ((buf + sClean).length > MAX) { newPages.push(buf.trim()); buf = tag + " " + sClean; }
                 else { buf += " " + sClean; }
             });
             if (buf && buf !== tag) newPages.push(buf.trim());
         });
-        if (newPages.length > currentPages.length) { if (isGenerating && newPages.length < 2) return; currentPages = newPages; if (!hasStartedTypingThisTurn && !isTyping) startTypewriter(currentPages[currentPageIndex]); }
+        if (newPages.length >= currentPages.length) {
+            const isNewContent = newPages.length > currentPages.length || (newPages.length > 0 && newPages[newPages.length - 1] !== currentPages[currentPages.length - 1]);
+
+            if (isNewContent) {
+                if (isGenerating && newPages.length < 2 && newPages.length > currentPages.length) return; // Still wait if it's the very first chunk and excessively short, though usually we want updates. Actually, let's relax this to just respect the content change.
+
+                // Re-evaluate the "don't show single short page" rule only if we are truly starting fresh
+                if (isGenerating && newPages.length < 2 && currentPages.length === 0) return;
+
+                currentPages = newPages;
+
+                if (!hasStartedTypingThisTurn && !isTyping) {
+                    startTypewriter(currentPages[currentPageIndex]);
+                } else if (isTyping && currentPageIndex === currentPages.length - 1) {
+                    // We are currently typing the last page and it got updated
+                    const newText = currentPages[currentPageIndex];
+                    const nameMatch = newText.match(/^\[(.*?)\]\s*:/);
+                    const newCleanText = nameMatch ? newText.replace(/^\[.*?\]\s*:/, '').trim() : newText;
+
+                    if (newCleanText.length > currentCleanText.length) {
+                        currentCleanText = newCleanText;
+                        // The animate loop will naturally pick up the new length
+                    }
+                }
+            }
+        }
     }
 
     observer = new MutationObserver(() => {
@@ -254,12 +282,56 @@
 
     diagBox.onclick = advance;
     function toggleVnMode() { isVnMode = !isVnMode; stage.classList.toggle('vn-hidden', !isVnMode); }
-    window.onkeydown = (e) => { if (e.key === "Escape") toggleVnMode();
-    if (isVnMode && (e.key === " " || e.key === "ArrowRight") && !isMenuOpen && !backlogCont.classList.contains('visible') && document.activeElement !== vnInput) advance(); };
+    window.onkeydown = (e) => {
+        if (e.key === "Escape") toggleVnMode();
+        if (isVnMode && (e.key === " " || e.key === "ArrowRight") && !isMenuOpen && !backlogCont.classList.contains('visible') && document.activeElement !== vnInput) advance();
+    };
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     overlay.onclick = () => { if (isMenuOpen) trigger.click(); };
-    GM_xmlhttpRequest({ method: 'GET', url: 'https://i.postimg.cc/W3xR61yr/Gemini-Generated-Image-6lymkg6lymkg6lym.png', responseType: 'blob', onload: (res) => { stage.style.backgroundImage = `url('${URL.createObjectURL(res.response)}')`; }});
-    function loadSpriteBlob(speaker) { const persona = PersonaLibrary[speaker]; if (!persona || persona.blobUrl) return;
-    GM_xmlhttpRequest({ method: 'GET', url: persona.url, responseType: 'blob', onload: (res) => { persona.blobUrl = URL.createObjectURL(res.response); }}); }
+    GM_xmlhttpRequest({ method: 'GET', url: 'https://i.postimg.cc/W3xR61yr/Gemini-Generated-Image-6lymkg6lymkg6lym.png', responseType: 'blob', onload: (res) => { stage.style.backgroundImage = `url('${URL.createObjectURL(res.response)}')`; } });
+    function loadSpriteBlob(speaker) {
+        const persona = PersonaLibrary[speaker]; if (!persona || persona.blobUrl) return;
+        GM_xmlhttpRequest({ method: 'GET', url: persona.url, responseType: 'blob', onload: (res) => { persona.blobUrl = URL.createObjectURL(res.response); } });
+    }
     loadSpriteBlob("coder bunny");
+
+    // Mobile Fullscreen Button
+    const fsBtn = document.createElement('div'); fsBtn.id = 'vn-fullscreen-btn'; fsBtn.textContent = '⛶';
+    document.body.appendChild(fsBtn);
+
+    function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || window.innerWidth <= 850
+            || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+    }
+
+    function updateBtnVisibility() {
+        fsBtn.style.display = isMobile() ? 'flex' : 'none';
+    }
+
+    updateBtnVisibility();
+    window.addEventListener('resize', updateBtnVisibility);
+
+    fsBtn.onclick = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+            fsBtn.textContent = '✖';
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+                fsBtn.textContent = '⛶';
+            }
+        }
+    };
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            fsBtn.textContent = '⛶';
+        } else {
+            fsBtn.textContent = '✖';
+        }
+    });
+
 })();
